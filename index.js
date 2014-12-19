@@ -16,12 +16,12 @@ function init(){
         name : "motd",
         payload : {
             doc : doc.getPayload(),
-            publisher : {
+            pub : {
                 type : "pub",
                 port : config.publisherPort
             },
             reqRep : {
-                type : "pub",
+                type : "rep",
                 port : config.repPort
             }
         }
@@ -35,7 +35,7 @@ function init(){
     repSock.bindSync("tcp://*:" + config.repPort);
 
     repSock.on("message", function(rawMsg){
-        var msg = helper.parsePayload(msg);
+        var msg = helper.tryParseJson(rawMsg.toString());
         var response;
 
         // could the message be parsed?
@@ -62,7 +62,9 @@ function init(){
 
     z.start(function(){
         console.log("started");
+        //setTimeout(function(){
         setNewMotd(motd);
+        //}, 1000);
     });
 
     // interrupt handler
