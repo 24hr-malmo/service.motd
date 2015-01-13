@@ -1,47 +1,35 @@
 var helper = require('service.helper');
 var zmq = require('zmq');
-var zonar = require('zonar');
+//var zonar = require('zonar');
 var config = require('./config');
 
 
 function init(){
+    var service = helper.service();
 
     var doc = helper.createDoc({ filename : "README.md"});
-    var repSock = zmq.socket('rep');
-    var pubsock = zmq.socket("pub");
+    //var repSock = zmq.socket('rep');
+    //var pubsock = zmq.socket("pub");
+    var publish = null;
     var motd = "motd service has the default message...";
 
-    var z = zonar.create({
-        net : "24hr",
-        name : "motd",
-        payload : {
-            doc : doc.getPayload(),
-            pub : {
-                type : "pub",
-                port : config.publisherPort
-            },
-            reqRep : {
-                type : "rep",
-                port : config.repPort
-            }
-        }
-    });
-
-
     // publisher
-    pubsock.bindSync("tcp://*:" + config.publisherPort);
+    //pubsock.bindSync("tcp://*:" + config.publisherPort);
 
     // reply
-    repSock.bindSync("tcp://*:" + config.repPort);
+    //repSock.bindSync("tcp://*:" + config.repPort);
+    service.rep({ endpointName : "command"}, function(err, rawMsg, reply){
+        if(err){
+            reply("error on server : " + err);
+            return;
+        }
 
-    repSock.on("message", function(rawMsg){
-        var msg = helper.tryParseJson(rawMsg.toString());
+        var msg = helper.tryParseJson(rawMsg);
         var response;
 
         // could the message be parsed?
         if(msg === false) {
-            response = errorResponse("Couldn't parse message : " + rawMsg);
-
+            response = errorResponse("Couldn't parse message as json : \"" + rawMsg + "\"");
         } else if(msg.type == "getMessage"){
             response = okResponse(motd);
         } else if(msg.type == "setMessage"){
@@ -56,23 +44,24 @@ function init(){
             response = errorResponse("Unknown message type in message : " + rawMsg);
         }
 
-        repSock.send(response);
-
+        reply(response);
     });
 
-    z.start(function(){
+    service.pub({ endpointName : "pub"}, function(err, publisher){
+        publish = publisher;
+    });
+
+    service.broadcast({ net : "24hr", name : "motd"}, function(){
         console.log("started");
-        //setTimeout(function(){
         setNewMotd(motd);
-        //}, 1000);
     });
 
     // interrupt handler
-    helper.handleInterrupt(z);
+    //helper.handleInterrupt(z);
 
     function setNewMotd(msg){
         motd = msg;
-        pubsock.send(motdResponse(msg));
+        publish(motdResponse(msg));
     }
 }
 
