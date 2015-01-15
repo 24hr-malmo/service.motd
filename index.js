@@ -3,21 +3,13 @@ var zmq = require('zmq');
 //var zonar = require('zonar');
 var config = require('./config');
 
-
 function init(){
     var service = helper.service();
 
     var doc = helper.createDoc({ filename : "README.md"});
-    //var repSock = zmq.socket('rep');
-    //var pubsock = zmq.socket("pub");
     var publish = null;
     var motd = "motd service has the default message...";
 
-    // publisher
-    //pubsock.bindSync("tcp://*:" + config.publisherPort);
-
-    // reply
-    //repSock.bindSync("tcp://*:" + config.repPort);
     service.rep({ endpointName : "command"}, function(err, rawMsg, reply){
         if(err){
             reply("error on server : " + err);
@@ -54,10 +46,8 @@ function init(){
     service.broadcast({ net : "24hr", name : "motd"}, function(){
         console.log("started");
         setNewMotd(motd);
+        service.handleInterrupt();
     });
-
-    // interrupt handler
-    //helper.handleInterrupt(z);
 
     function setNewMotd(msg){
         motd = msg;
