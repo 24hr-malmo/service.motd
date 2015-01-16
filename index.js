@@ -8,7 +8,7 @@ function init(){
 
     var doc = helper.createDoc({ filename : "README.md"});
     var publish = null;
-    var motd = "motd service has the default message...";
+    var motd = "No motd set :/";
 
     service.rep({ endpointName : "command"}, function(err, rawMsg, reply){
         if(err){
