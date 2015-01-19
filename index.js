@@ -29,6 +29,7 @@ function init(){
             if(!msg.message){
                 response = errorResponse("Property \"message\" missing on request : " + rawMsg);
             } else {
+                setNewMotd(msg.message);
                 response = motdResponse();
             }
 
